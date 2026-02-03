@@ -1,8 +1,7 @@
-from api import Option
+import numpy as np
+
+from ..api import Option
 
 class EuropeanCallOption(Option):
-    def __init__(self):
-        super().__init__()
-
-    def payoff(self, maturity_price):
-        return np.maximum(maturity_price - self.strike, 0)
+    def payoff(self, ST):
+        return np.maximum(ST - self.K, 0)

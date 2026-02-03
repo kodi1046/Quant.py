@@ -1,25 +1,22 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from typing import Optional, Dict, Tuple
 
 class Option(ABC):
     """Abstract class for all options."""
 
     def __init__(
         self, 
-        initial_value: float,
-        strike: float,
+        S0: float,
+        K: float,
         T: float,
-        risk_free_rate: float,
-        volatility: float,
-        dividend_yield: float = 0.0
+        r: float,
+        sigma: float,
     ):
-        self.initial_value = initial_value
-        self.strike = strike
+        self.S0 = S0
+        self.K = K
         self.T = T
-        self.risk_free_rate = risk_free_rate
-        self.volatility = volatility
-        self.dividend_yield = dividend_yield
+        self.r = r
+        self.sigma = sigma
     
     @abstractmethod
     def payoff(self, t):
@@ -48,6 +45,7 @@ class Simulation(ABC):
     """abstract class for all simulations."""
 
     def __init__(
+        self,
         option: Option,
         process: StochasticProcess,
         r: float,

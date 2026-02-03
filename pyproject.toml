@@ -3,14 +3,15 @@ name = "QuantPy"
 version = "0.1.0"
 description = "A python library for finance"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
+
 
 dependencies = [
     "numpy==2.4.1",
+    "matplotlib==3.10.8",
     
 ]
 
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
-

@@ -1,9 +1,8 @@
-from api import Simulation
+import numpy as np
+
+from ..api import Simulation
 
 class MonteCarloSimulation(Simulation):
-    def __init__():
-        super().__init__()
-    
     def run(self, num_paths, num_steps):
         paths = self.process.generate_paths(
             num_paths=num_paths,
