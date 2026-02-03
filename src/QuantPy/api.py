@@ -9,14 +9,14 @@ class Option(ABC):
         self, 
         initial_value: float,
         strike: float,
-        time_horizon: float,
+        T: float,
         risk_free_rate: float,
         volatility: float,
         dividend_yield: float = 0.0
     ):
         self.initial_value = initial_value
         self.strike = strike
-        self.time_horizon = time_horizon
+        self.T = T
         self.risk_free_rate = risk_free_rate
         self.volatility = volatility
         self.dividend_yield = dividend_yield
@@ -31,21 +31,17 @@ class StochasticProcess(ABC):
 
     def __init__(
         self,
-        drift: float,
-        volatility: float,
-        initial_value: float,
-        correlation: np.matrix.__float__,
-        seed = None,
-
+        S0: float, # initial value
+        sigma: float, # volatility 
+        mu: float, # drift
     ):
-        self.drift = drift
-        self.volatility = volatility
-        self.initial_value = initial_value
-        self.correlation = correlation
-        self.seed = seed
+        self.S0 = S0
+        self.sigma = sigma
+        self.mu = mu
+
 
     @abstractmethod
-    def generate_paths(num_paths: int, num_steps: int, T: float):
+    def generate_paths(self, num_paths: int, num_steps: int, T: float):
         pass
 
 class Simulation(ABC):
@@ -54,14 +50,13 @@ class Simulation(ABC):
     def __init__(
         option: Option,
         process: StochasticProcess,
-        num_paths: int,
-        num_steps: int
+        r: float,
+
     ):
         self.option = option
         self.process = process
-        self.num_paths = num_paths
-        self.num_steps = num_steps
+        self.r = r
 
     @abstractmethod 
-    def run(self):
+    def run(self, num_paths, num_steps):
         pass
