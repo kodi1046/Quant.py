@@ -10,7 +10,7 @@ class MarketProcessor:
         Formula:
             ln(price_t / price_{t-1})
         """
-        return np.log(self.prices / self.prices.shift(1)).dropna()
+        return np.log(self.prices / self.prices.shift(1)).dropna() / 100
     
     def get_realized_volatility(self, window=252): # annualized by default
         """
@@ -23,4 +23,7 @@ class MarketProcessor:
                       to represrent 1 trading year
         """
         returns = self.calculate_log_returns()
-        return returns.std() * np.sqrt(window)
+        return (returns.std() * np.sqrt(window)).iloc[-1].item()
+
+    def get_spot_price(self):
+        return self.prices.iloc[-1].item()

@@ -8,5 +8,5 @@ class Equity(Instrument):
         super().__init__()
         self.ticker = ticker # stock symbol
     
-    def payoff(self, S_t):
-        return S_t
+    def payoff(self, S):
+        return S

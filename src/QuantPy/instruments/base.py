@@ -16,3 +16,4 @@ class Instrument(ABC):
     @abstractmethod
     def payoff(self, market_state):
         pass
+
