@@ -25,9 +25,6 @@ class EuropeanOption(VanillaOption):
         """
         The Black Scholes engine for a European option
         """
-        def __init__(self):
-            pass
-
         def calculate_price(self, instrument, market_state):
             r, S, sigma = market_state.r, market_state.S, market_state.sigma
             K, T = instrument.K, instrument.T
@@ -88,7 +85,15 @@ class EuropeanOption(VanillaOption):
 
 
 class AmericanOption(VanillaOption):
-    pass
+    class BinomialTree(Engine):
+        """
+        The Binomial Tree engine for an American option
+        """
+        def calculate_price(self, instrument, market_state):
+            pass
+        def calculate_greeks(self, instrument, market_state):
+            pass
+
 
 class ExoticOption(Instrument):
     pass

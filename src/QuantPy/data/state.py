@@ -1,6 +1,6 @@
 
 class MarketState:
-    def __init__(self, ticker, S, sigma, r, q=0.0):
+    def __init__(self, ticker, S, series, sigma, r, q=0.0):
         """
         A snapshot of the market for a single underlying asset.
 
@@ -13,6 +13,7 @@ class MarketState:
         """
         self.ticker = ticker
         self.S = S
+        self.series = series
         self.sigma = sigma
         self.r = r
         self.q = q
