@@ -1,4 +1,4 @@
-from ..backtest import Backtest
+from .backtest import Backtest
 
 def main():
     pass

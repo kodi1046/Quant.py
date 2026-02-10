@@ -1,4 +1,3 @@
-from ..backtest import Backtest
 
 def main():
     pass
