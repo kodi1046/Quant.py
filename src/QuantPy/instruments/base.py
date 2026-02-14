@@ -10,8 +10,13 @@ class Instrument(ABC):
     
     def price(self, market_state):
         if self.engine is None:
-            raise ValueError("No pricing engine found")
+            raise ValueError("No pricing engine found, don't forget to set it")
         return self.engine.calculate_price(self, market_state)
+    
+    def greeks(self, market_state):
+        if self.engine is None:
+            raise ValueError("No pricing engine found, don't forget to set it")
+        return self.engine.calculate_greeks(self, market_state)
 
     @abstractmethod
     def payoff(self, market_state):

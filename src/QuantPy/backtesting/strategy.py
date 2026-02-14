@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from ..instruments.equity import Equity
+from .order import Order, OrderSide
 
 class Strategy(ABC):
     def __init__(self, params=None):
@@ -10,7 +11,6 @@ class Strategy(ABC):
     def on_data(self, date, market_state, portfolio):
         pass
 
-# example
 class DeltaHedgeStrategy(Strategy):
     def __init__(self, instrument, quantity, engine, params=None):
         super().__init__(params)
@@ -18,23 +18,35 @@ class DeltaHedgeStrategy(Strategy):
         self.target_qty = quantity
         self.engine = engine
         self.initialized = False
+        self.equity_instrument = None
+        self.threshold = 1.0
 
     def on_data(self, date, market_state, portfolio):
         trades = []
 
+        # initial trade
         if not self.initialized:
-            trades.append(('BUY', self.instrument, self.target_qty))
+            side = OrderSide.BUY if self.target_qty > 0 else OrderSide.SELL
+            trades.append(Order(side, self.instrument, abs(self.target_qty)))
             self.initialized = True
-            return trades
         
         current_greeks = portfolio.get_greeks(market_state, self.engine)
         net_delta = current_greeks['delta']
+        threshold = self.params.get('threshold', self.threshold)
 
-        threshold = self.params.get('threshold', 0.01)
-
-        if abs(net_delta) > threshold:
+        if abs(net_delta) > threshold and abs(net_delta) > self.threshold:
             hedge_qty = -net_delta
-            equity_instrument = Equity(market_state.ticker)
-            trades.append(('BUY', equity_instrument, hedge_qty))
+            hedge_side = OrderSide.BUY if hedge_qty > 0 else OrderSide.SELL
+            abs_hedge_qty = abs(hedge_qty)
+
+            if self.equity_instrument is None:
+                self.equity_instrument = Equity(market_state.ticker)
+                self.equity_instrument.set_engine(self.equity_instrument.EquityEngine())
+            
+            trades.append(Order(
+                hedge_side,
+                self.equity_instrument,
+                abs_hedge_qty
+            ))
         
         return trades

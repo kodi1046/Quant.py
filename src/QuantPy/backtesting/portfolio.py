@@ -1,4 +1,6 @@
 from ..instruments.option import Option, EuropeanOption, CALL, PUT
+from ..instruments.option import Option
+from ..instruments.equity import Equity
 
 class Portfolio:
     def __init__(self, initial_cash):
@@ -11,7 +13,8 @@ class Portfolio:
         self.positions.append(position)
 
     def remove_position(self, position):
-        self.positions.pop(position)
+        if position in self.positions:
+            self.positions.remove(position)
 
     def mark_to_market(self, market_state, engine):
         total_mv = 0
@@ -20,10 +23,11 @@ class Portfolio:
         return total_mv
 
     def get_greeks(self, market_state, engine):
-        total_greeks = []
+        total_greeks = {'delta': 0.0, 'gamma': 0.0, 'vega': 0.0, 'theta': 0.0, 'rho': 0.0}
         for pos in self.positions:
-            greeks = pos.get_greeks(market_state, engine)
-            total_greeks.append(greeks)
+            g = pos.get_total_greeks(market_state, engine)
+            for greek, value in g.items():
+                total_greeks[greek] += value
         return total_greeks
     
     def get_total_market_value(self, market_state, engine):
@@ -32,12 +36,15 @@ class Portfolio:
     def get_total_equity(self, market_state, engine):
         return self.cash + self.get_total_market_value(market_state, engine)
 
-    def cleanup_expired(self, market_state):
+    def cleanup_expired(self, market_state, date):
         active_positions = []
         for pos in self.positions:
-            if isinstance(pos.instrument, Option) and market_state.T <= 0:
-                payoff_value = pos.instrument.payoff(market_state.S)
-                self.cash += payoff_value * pos.quantity
+            if isinstance(pos.instrument, Option):
+                if pos.instrument.expiry is not None and date >= pos.instrument.expiry:
+                    payoff_value = pos.instrument.payoff(market_state.S) * pos.quantity
+                    self.cash += payoff_value
+                else:
+                    active_positions.append(pos)
             else:
                 active_positions.append(pos)
             
@@ -61,16 +68,16 @@ class Position:
         self.quantity = quantity
         self.entry_price = entry_price
     
-    def __get_unit_price(self, market_state, engine):
-        return engine.calculate_price(self.instrument, market_state)
+    def get_unit_price(self, market_state, engine):
+        return self.instrument.price(market_state)
     
     def get_market_value(self, market_state, engine):
-        return __get_unit_price(market_state, engine) * self.quantity
+        return self.get_unit_price(market_state, engine) * self.quantity
 
     def get_unrealized_pnl(self, market_state, engine):
-        return (__get_unit_price(market_state, engine) - self.entry_price) * self.quantity
+        return (self.get_unit_price(market_state, engine) - self.entry_price) * self.quantity
 
     def get_total_greeks(self, market_state, engine):
-        unit_greeks = engine.calculate_greeks(market_state, engine)
+        unit_greeks = self.instrument.greeks(market_state)
         return {k: v * self.quantity for k, v in unit_greeks.items()}
 
