@@ -30,8 +30,7 @@ class DeltaHedgeStrategy(Strategy):
             trades.append(Order(side, self.instrument, abs(self.target_qty)))
             self.initialized = True
         
-        current_greeks = portfolio.get_greeks(market_state, self.engine)
-        net_delta = current_greeks['delta']
+        net_delta = portfolio.get_delta(market_state, self.engine)
         threshold = self.params.get('threshold', self.threshold)
 
         if abs(net_delta) > threshold and abs(net_delta) > self.threshold:

@@ -22,13 +22,12 @@ class Portfolio:
             total_mv += pos.get_market_value(market_state, engine)
         return total_mv
 
-    def get_greeks(self, market_state, engine):
-        total_greeks = {'delta': 0.0, 'gamma': 0.0, 'vega': 0.0, 'theta': 0.0, 'rho': 0.0}
+    
+    def get_delta(self, market_state, engine):
+        total_delta = 0.0
         for pos in self.positions:
-            g = pos.get_total_greeks(market_state, engine)
-            for greek, value in g.items():
-                total_greeks[greek] += value
-        return total_greeks
+            total_delta += pos.get_total_delta(market_state, engine)
+        return total_delta
     
     def get_total_market_value(self, market_state, engine):
         return sum(pos.get_market_value(market_state, engine) for pos in self.positions)
@@ -52,13 +51,13 @@ class Portfolio:
 
     def record_snapshot(self, date, market_state, engine):
         equity = self.get_total_equity(market_state, engine)
-        greeks = self.get_greeks(market_state, engine)
+        delta = self.get_delta(market_state, engine)
         snapshot = {
             'date': date,
             'equity': equity,
             'cash': self.cash,
             'pnl_pct': (equity / self.initial_cash) - 1,
-            **greeks
+            'delta': delta
         }
         self.history.append(snapshot)
 
@@ -76,8 +75,10 @@ class Position:
 
     def get_unrealized_pnl(self, market_state, engine):
         return (self.get_unit_price(market_state, engine) - self.entry_price) * self.quantity
+    
+    def get_total_delta(self, market_state, engine):
+        unit_delta = self.instrument.delta(market_state)
+        return unit_delta * self.quantity
 
-    def get_total_greeks(self, market_state, engine):
-        unit_greeks = self.instrument.greeks(market_state)
-        return {k: v * self.quantity for k, v in unit_greeks.items()}
+    
 

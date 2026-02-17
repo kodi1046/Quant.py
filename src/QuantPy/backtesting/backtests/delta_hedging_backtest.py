@@ -10,7 +10,7 @@ from ...backtesting.backtest import Backtest
 from ...backtesting.strategy import DeltaHedgeStrategy
 from ...instruments.option import EuropeanOption, CALL
 
-def main():
+def main(instrument, engine):
     """
     Delta hedging backtest, hedging AAPL stock, using a european call option, which uses black scholes for pricing
     """
@@ -19,9 +19,9 @@ def main():
     END_DATE     = datetime(2026, 2, 1)
     INITIAL_CASH = 10000
 
-    OPTION_K       = 240
-    OPTION_T_years = 0.5
-    OPTION_TYPE    = CALL
+    OPTION_K       = instrument.K
+    OPTION_T_years = instrument.T
+    OPTION_TYPE    = instrument.option_type
     OPTION_QTY     = 10
     EXPIRY_DATE  = START_DATE + timedelta(days=int(OPTION_T_years * 365.25))
 
@@ -42,8 +42,6 @@ def main():
     print(f"risk-free rate: {r:.4f}")
 
     price_series = close_series.to_dict()
-
-    engine = EuropeanOption.BlackScholes()
 
     option = EuropeanOption(
         K = OPTION_K,
@@ -121,4 +119,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    instrument1 = EuropeanOption(240, 0.5, CALL)
+    engine1 = instrument1.BlackScholes()
+    # main(instrument1, engine1)
+
+    instrument2 = instrument1
+    engine2 = instrument1.MonteCarlo(num_simulations=10000)
+    main(instrument2, engine2)
