@@ -1,6 +1,6 @@
 
 class MarketState:
-    def __init__(self, ticker, S, series, sigma, r, q=0.0, T=None):
+    def __init__(self, ticker, S, series, sigma, r, q=0.0, T=None, path=None):
         """
         A snapshot of the market for a single underlying asset.
 
@@ -18,6 +18,7 @@ class MarketState:
         self.r = r
         self.q = q
         self.T = T
+        self.path = path
     
     def __repr__(self):
         return f"<MarketState ticker:'{self.ticker}', S_T:{self.S:.2f}, Vol:{self.sigma:.2}, r:{self.r:.2}>"

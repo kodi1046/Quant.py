@@ -40,7 +40,7 @@ class Portfolio:
         for pos in self.positions:
             if isinstance(pos.instrument, Option):
                 if pos.instrument.expiry is not None and date >= pos.instrument.expiry:
-                    payoff_value = pos.instrument.payoff(market_state.S) * pos.quantity
+                    payoff_value = pos.instrument.payoff(market_state) * pos.quantity
                     self.cash += payoff_value
                 else:
                     active_positions.append(pos)

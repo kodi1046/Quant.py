@@ -9,8 +9,8 @@ class Equity(Instrument):
         super().__init__()
         self.ticker = ticker # stock symbol
     
-    def payoff(self, S):
-        return S
+    def payoff(self, market_state):
+        return market_state.S
 
     class EquityEngine(Engine):
         def calculate_price(self, instrument, market_state):

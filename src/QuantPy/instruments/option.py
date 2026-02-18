@@ -1,15 +1,13 @@
 import numpy as np
 from scipy.stats import norm
 from .base import Instrument, Greeks
-from ..engine.base import Engine, Greeks
+from ..engine.base import Engine, Greeks, MonteCarloEngine
 from ..data.state import MarketState
 
 CALL = 'call'
 PUT = 'put'
 
 class Option(Instrument):
-    pass
-class VanillaOption(Option):
     def __init__(self, K, T, option_type, expiry=None):
         super().__init__()
         self.K = K # strike price
@@ -18,31 +16,16 @@ class VanillaOption(Option):
             raise ValueError(f"Invalid option_type: {option_type}")
         self.option_type = option_type
         self.expiry = expiry
-    
-    def payoff(self, S):
+class VanillaOption(Option):
+    def payoff(self, market_state):
         if self.option_type == CALL:
-            return np.maximum(S - self.K, 0)
-        return np.maximum(self.K - S, 0)
+            return np.maximum(market_state.S - self.K, 0)
+        return np.maximum(self.K - market_state.S, 0)
     
-    class MonteCarlo(Engine):
+    class MonteCarlo(MonteCarloEngine):
         """
         The Monte Carlo engine for vanilla options
         """
-        def __init__(
-            self,
-            num_simulations=100_000,
-            antithetic=True,
-            control_variate=True,
-            random_seed=None,
-            bump_size=0.01
-        ):
-            self.num_simulations = num_simulations
-            self.antithetic = antithetic
-            self.control_variate = control_variate
-            self.rng = np.random.default_rng(random_seed)
-            self.bump_size = bump_size
-
-            self.effective_simulations = num_simulations // 2 if self.antithetic else self.num_simulations
         
         def _simulate_terminal_prices(self, S, r, sigma, T):
             """
@@ -71,9 +54,21 @@ class VanillaOption(Option):
 
             S_T = self._simulate_terminal_prices(S, r - q, sigma, T)
 
-            payoffs = np.array([instrument.payoff(s_t) for s_t in S_T
-            ])
+            payoffs = []
 
+            for s_t in S_T:
+                temp_state = MarketState(
+                    ticker=market_state.ticker,
+                    S=s_t,                     
+                    series=market_state.series,  
+                    sigma=market_state.sigma,
+                    r=market_state.r,
+                    q=market_state.q,
+                    T=0.0                      
+                )
+                payoffs.append(instrument.payoff(temp_state))
+
+            payoffs = np.array(payoffs)
             price = np.exp(-r * T) * np.mean(payoffs)
 
             return price
@@ -204,7 +199,7 @@ class EuropeanOption(VanillaOption):
             phi = 1 if instrument.option_type == CALL else -1
             
             if T <= 0:
-                return instrument.payoff(S)
+                return instrument.payoff(market_state)
 
             d1 = BlackScholes._d1(instrument, market_state)
             d2 = BlackScholes._d2(instrument, market_state)
@@ -242,5 +237,86 @@ class AmericanOption(VanillaOption):
 
 
 class ExoticOption(Option):
+    """
+    Base for all exotic options
+    """
     pass
+
+class AsianOption(ExoticOption):
+    def __init__(
+        self, 
+        K, 
+        T, 
+        option_type, 
+        averaging_type="arithmetic", 
+        expiry=None):
+        super().__init__(self, K, T, option_type, expiry)
+        ARITHMETIC_TYPE = "arithmetic"
+        GEOMETRIC_TYPE = "geometric"
+        if averaging_type not in [ARITHMETIC_TYPE, GEOMETRIC_TYPE]:
+            raise ValueError(f"Invalid averaging_type: {averaging_type}")
+        self.averaging_type = averaging_type
+    
+    def payoff(self, market_state):
+        if market_state.path is None:
+            raise ValueError("Path-dependent option requires market_state.path to be set")
+        
+        path = market_state.path
+        avg = np.mean(path)
+        return max(avg - self.K, 0) if self.option_type == CALL else max(self.K - avg, 0)
+       
+
+    class MonteCarlo(MonteCarloEngine):
+        """
+        Path-dependent MonteCarlo engine for Asian option
+        """
+        def calculate_price(self, instrument, market_state, stochastic_model):
+            """
+            Prices Asian options using full path simulation from given model.
+            """
+            if stochastic_model is None:
+                raise ValueError("Path-dependent options need a stochastic_model to be specified.")
+
+            S = market_state.S
+            r = market_state.r
+            q = market_state.q
+            sigma = market_state.sigma
+            T = market_state.T
+            
+            if T <= 0:
+                temp_state = MarketState(
+                    ticker=market_state.ticker, 
+                    S=S,
+                    series=market_state.series,
+                    sigma=sigma,
+                    r=r,
+                    q=q,
+                    T=0.0)
+                return instrument.payoff(temp_state)
+            
+            paths = stochastic_model.generate_paths(
+                S=S,
+                T=T,
+                r=r - q,
+                sigma=sigma,
+                n_paths=self.effective_simulations,
+                n_steps=self.n_steps)
+            
+            payoffs = []
+            for path in paths:
+                temp_state = MarketState(
+                    ticker=market_state.ticker,
+                    S=path[-1],
+                    series=market_state.series,
+                    sigma=sigma,
+                    r=r,
+                    q=q,
+                    T=0.0,
+                    path=path
+                )
+                payoffs.append(instrument.payoff(temp_state))
+            
+            payoffs = np.array(payoffs)
+            price = np.exp(-r * T) * np.mean(payoffs)
+            return price
 
