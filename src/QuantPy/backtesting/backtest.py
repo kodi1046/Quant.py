@@ -1,18 +1,55 @@
+import pandas as pd
+
 from .portfolio import Portfolio, Position
 from ..data.state import MarketState
 from .order import Order, OrderSide
 from ..instruments.option import Option
 from ..instruments.equity import Equity
+from .strategy import Strategy
+from ..engine.base import Engine
 
 class Backtest:
-    def __init__(self, ticker, price_series, r, sigma):
+    """
+    Class for backtesting a strategy on a price series.
+
+    Parameters
+    ----------
+    ticker: str
+        The ticker for the underlying price series.
+    price_series: pd.DataFrame
+        The actual price series to use for backtesting.
+    r: float
+        The risk-free rate.
+    sigma: float
+        The volatiltiy of the asset.
+    """
+    def __init__(
+        self, 
+        ticker: str, 
+        price_series: pd.DataFrame, 
+        r: float,
+        sigma: float):
         self.ticker = ticker
         self.price_series = price_series
         self.r = r
         self.sigma = sigma
         self.portfolio = None
     
-    def run(self, strategy, engine):
+    def run(self, strategy: Strategy, engine: Engine):
+        """
+        Runs a backtest with a given strategy and engine.
+
+        Parameters
+        ----------
+        strategy: Strategy
+            The strategy to backtest.
+        engine: Engine
+            The engine to use to calculate the price of the asset.
+        Note
+        ----
+        - The default amount of initial_cash is $10000
+        - The engine, the underlying asset, and the startegy all need to be compatible.
+        """
         self.portfolio = Portfolio(initial_cash=10000)
         for date, price in self.price_series[self.ticker].items():
             start_date = min(self.price_series[self.ticker].keys())

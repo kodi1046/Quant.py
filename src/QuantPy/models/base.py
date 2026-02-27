@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 
 class StochasticModel(ABC):
+    """
+    Abstract class for stochastic models.
+    """
     @abstractmethod
     def generate_expectation(self, S, T, r, sigma):
         pass

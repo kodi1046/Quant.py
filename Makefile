@@ -8,4 +8,4 @@ run:
 
 clean:
 	@echo "Cleaning everything in .gitignore"
-	git clean -fdX -e .venv
+	git clean -fdX -n -e .venv/

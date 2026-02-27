@@ -2,30 +2,60 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 
+from datetime import datetime
+
 class DataFetcher:
 
     @staticmethod
-    def get_historical_data(ticker, start_date, end_date):
+    def get_historical_data(ticker: str, start_date: datetime, end_date: datetime):
         """
-        Fetches OHLCV data from yfinance
+        Fetches OHLCV data from yfinance.
 
-        Parameters:
-        ticker (string): the stock symbol, e.g. "AAPL", or "TSLA"
-        start_time (string): the start date of the data, e.g. "2020-01-12"
-        end_date (string): the end date of the data, e.g. "2024-06-01"
+        Parameters
+        ----------
+        ticker: string 
+            The stock symbol, e.g. "AAPL", or "TSLA".
+        start_time: datetime 
+            The start date of the data, e.g. 2020-01-12.
+        end_date: datetime 
+            The end date of the data, e.g. 2024-06-01.
 
-        Returns:
-        data (pandas Series): series containing the adjusted closing prices,
-                              for the given asset, for each date in the range
+        Returns
+        -------
+        pd.DataFrame 
+            DataFrame containing the adjusted closing prices, 
+            for the given asset, for each date in the range.
         """
         
         data = yf.download(ticker, start=start_date, end=end_date, progress=False) # pandas DataFrame
         if data.empty:
             raise ValueError(f"No data found for ticker: {ticker}")
-        return data['Close'] # subject to change
+        CLOSING_PRICES = 'Close'
+        return data[CLOSING_PRICES]
 
     @staticmethod
     def get_risk_free_rate(target_date=None):
+        """
+        Retrieves the U.S. 13-week Treasury Bill yield (^IRX) from Yahoo Finance
+        and returns it as a decimal risk-free rate.
+
+        The function searches for the most recent available closing yield within
+        a 10-day window ending at `target_date`. If `target_date` is None,
+        the current date is used.
+
+        Parameters
+        ----------
+        target_date: datetime 
+            The end date for the yield lookup window. If None, uses the
+            current timestamp. The function looks back 10 days from this date.
+
+        Returns
+        -------
+        float 
+            The latest available 13-week T-bill yield expressed as a decimal
+            (e.g., 0.0525 for 5.25%). If data retrieval fails for any reason,
+            the function returns a fallback value of 0.04 (4%).     
+        """
         ticker = "^IRX"
 
         if target_date is None:

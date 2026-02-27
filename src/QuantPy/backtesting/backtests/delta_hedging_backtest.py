@@ -124,5 +124,5 @@ if __name__ == '__main__':
     # main(instrument1, engine1)
 
     instrument2 = instrument1
-    engine2 = instrument1.MonteCarlo(num_simulations=10000)
+    engine2 = instrument1.MonteCarlo(num_simulations=1000)
     main(instrument2, engine2)

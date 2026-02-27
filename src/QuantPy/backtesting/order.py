@@ -11,4 +11,3 @@ class Order:
         self.instrument = instrument
         self.quantity = quantity
 
-    # potential exectute method? Or should be outsourced?
