@@ -15,3 +15,4 @@ This library contains all necessary tools to create your own backtests, just cre
 
 ## Stats
 NOTE: Not implemented
+![backtest](./assets/backtest_const_vol_delta_hedge_european_call.png)
